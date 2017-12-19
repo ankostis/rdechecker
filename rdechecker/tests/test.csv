@@ -1,0 +1,16 @@
+-
+  experiment: test1
+  vehicle: BMW
+  lab: VELA-2
+  date: 44/33/2017
+  cycle: NEDC
+  cycle condition: standard
+  oil temperature: cold
+  cell temperature:
+  RLs: NEDC RLs
+  comments: missing currents/inverted currents
+  DYNOstorage: path
+  Currentstorage: path
+  OBDstorage: path
+  FDIRstorage:  "E:\\path\\of\\file"
+  Vehicle_specifications:

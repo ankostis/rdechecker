@@ -1,0 +1,10 @@
+$schema: "http://json-schema.org/draft-04/schema#"
+decription: Real-Driving-Emissions monitoring files validator
+title: rdechecker
+file_kinds:
+    f1:
+        sections:
+            - start: 0
+              end:   8
+            - start: 20
+              end:   25
