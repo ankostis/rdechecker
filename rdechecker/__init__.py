@@ -26,7 +26,7 @@ def _parse_yaml(finp, drop_comments=False):
     return yaml.load(finp, yaml.Loader if drop_comments else yaml.RoundTripLoader)
 
 
-_file_spec_regex = re.compile('^(\w+):(.*)$')
+_file_spec_regex = re.compile(r'^(\w+):(.*)$')
 def parse_file_spec(file_spec):
     m = _file_spec_regex.match(file_spec)
     if not m:
@@ -34,6 +34,38 @@ def parse_file_spec(file_spec):
                            file_spec)
     return m.groups()
 
+_cell_format_regex = re.compile(r'^(?:(int|float|re):)?(.*)$')
+def validate_cell_format(cell_format, cell):
+    # TODO: Use *schema* lbrary: https://pypi.python.org/pypi/schema/
+    def assert_equal(exp, got):
+        if exp != got:
+            raise AppException('%r != %r' % (exp, got))
+
+    def assert_regex(regex, got):
+        if not re.match(regex, got):
+            raise AppException('%r !~ %r' % (regex, got))
+
+    dtype_funcs = {
+        None: assert_equal,
+        'int': int,
+        'float': float,
+        're': assert_regex,
+    }
+    m = _cell_format_regex.match(cell_format)
+    dtype = m.group(1)
+    arg = m.group(2)
+    args = []
+    func = dtype_funcs[dtype]
+    if arg:
+        args.append(arg)
+    args.append(cell)
+    ## Should scream if invalid....
+    try:
+        func(*args)
+    except AppException:
+        raise
+    except Exception as ex:
+        raise AppException(str(ex))
 
 class RdeChecker:
     def __init__(self, *file_specs, archive=False, delimiter=','):
@@ -41,6 +73,9 @@ class RdeChecker:
         self.archive = archive
         self.delimiter = delimiter
         self._read_files_schema()
+
+        if self.archive:
+            raise NotImplemented('HDF5-archiving not ready yet.')
 
     def _read_files_schema(self):
         with pkg_resources.resource_stream(__name__,   # @UndefinedVariable
@@ -56,8 +91,10 @@ class RdeChecker:
 
     def _prepare_section_break_indices(self, sections_schema):
         """
+        Section-schema gets validated here, and thrown assertions.
+
         :param sections_schema:
-            must be sorted by `start` line
+            must be sorted by `start` offset
         :return:
             an ascending list of line-indices(1-based) for all section-breaks
         """
@@ -81,43 +118,79 @@ class RdeChecker:
 
                 last_end = end
             except Exception as ex:
-                ex.args += ("  schema-section no: %i" % i, )
+                ex.args += ("schema-section no: %i" % i, )
                 raise
 
         return break_line_indices
 
-    def _split_sections(self, sections_schema, fp):
+    def _yield_section_lines(self, sections_schema, fp):
+        """
+        :return:
+            A generator yielding for each line the tuple::
+
+                (i, line_schema, line)
+
+            The line-number `i` is 1-based.
+        """
+        sections_schema = sorted(sections_schema, key=lambda s: s['start'])
+        sections_schema_iter = iter(sections_schema)
+
+        def next_section_schema():
+            sch = next(sections_schema_iter)
+
+            return sch, sch.get('lines')
+
+        cur_schema, cur_lines_schema = next_section_schema()
+
         break_indices = self._prepare_section_break_indices(sections_schema)
         break_indices = set(break_indices) if break_indices else ()
 
-        sections = []
-        prev_section_i = -1  # Ensure 1st section considered "jump" below.
         for i, line in enumerate(fp, 1):
-            if i in break_indices:
-                if not self._is_section_break_line(line):
-                    raise AppException(
-                        "Found non-void section-break line no-%i: %s" %
-                        (i, line))
-            else:
-                if i > prev_section_i + 1:
-                    ## Jumped section:
-                    cur_section = []
-                    sections.append(cur_section)
+            try:
+                if i in break_indices:
+                    if not self._is_section_break_line(line):
+                        raise AppException(
+                            "Found non-void section-break:\n  %s" %
+                            (i, line))
+                else:
+                    if i > (cur_schema.get('end') or float('inf')):
+                        ## Jump section.
 
-                cur_section.append(line)
-                prev_section_i = i
+                        cur_schema, cur_lines_schema = next_section_schema()
+                        assert i == cur_schema['start'], (
+                            "Jumped outside a section?", i, cur_schema)
+                    else:
+                        assert i >= cur_schema['start'], (
+                            "Walking outside a section?", i, cur_schema)
 
-        print([len(s) for s in sections])
+                    yield i, cur_lines_schema and cur_lines_schema.get(i), line
+            except Exception as ex:
+                ex.args += ("line-no: %i" % i, )
+                raise
 
-        return sections
+    def _validate_line(self, r, line_schema, line):
+        if line_schema:
+            for c, (cell_format, cell) in enumerate(zip(line_schema,
+                                                        line.split(self.delimiter))):
+                if cell_format:
+                    try:
+                        validate_cell_format(cell_format, cell)
+                    except Exception as ex:
+                        ex.args += ("cell-format: %s" % cell_format,
+                                    "column: %i" % c,
+                                    "row: %i" % r)
+                        raise
 
     def validate_stream(self, kind_schema, fp):
         sections_schema = kind_schema.get('sections')
         if sections_schema:
-            sections_schema = sorted(sections_schema, key=lambda s: s['start'])
-            self._split_sections(sections_schema, fp)
+            for line_spec in self._yield_section_lines(sections_schema, fp):
+                self._validate_line(*line_spec)
         else:
-            raise NotImplemented('Only sectioned files supported yet')
+            lines_schema = kind_schema.get('lines')
+            if lines_schema:
+                for i, line in enumerate(fp, 1):
+                    self._validate_line(i, lines_schema.get(i), line)
 
     def validate_filespec(self, file_spec):
         """
@@ -138,8 +211,9 @@ class RdeChecker:
             self.validate_stream(kind_schema, sys.stdin)
 
     def process_files(self):
-        if not self.file_specs:
-            raise AppException('No file-spec given!')
-
         for fspec in self.file_specs:
-            self.validate_filespec(fspec)
+            try:
+                self.validate_filespec(fspec)
+            except Exception as ex:
+                ex.args += ("file-spec: %r" % fspec, )
+                raise

@@ -6,7 +6,7 @@
 # You may not use this work except in compliance with the Licence.
 # You may obtain a copy of the Licence at: http://ec.europa.eu/idabc/eupl
 """
-Validate & archive Real-Driving-Emissions files.
+Validate & archive Real-Driving-Emissions CSV-files (TODO: Excel).
 
 USAGE:
   rdecheck [--log=<level>] [--archive] <file-spec> ...
