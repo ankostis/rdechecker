@@ -9,13 +9,15 @@
 Validate & archive Real-Driving-Emissions CSV-files (TODO: Excel).
 
 USAGE:
-  rdecheck [--log=<level>] [-a] <file-spec>...
+  rdecheck [--log=<level>] [-a] [-f=<fkind>] <file-spec>...
   rdecheck -l
 
 WHERE:
   <file-spec>                 A string like: [<fkind>:]<fpath>.
                               Use `-` <fpath> for STDIN; use `rdecheck -l` to list
                               available file-kinds.
+                              No need to specify <fkind> if `-f=<fkind>` given.
+  -f=<fkind>, --kind=<fkind>  Assume default <fkind> for all <file-spec> given.
   -l, --list-fkinds           List available file-kinds.
   -a, --archive               TODO: Archive all input files into an HDF5 archive [default: false]
   --log=<level>               Set logging level to integer or string:
@@ -130,11 +132,17 @@ def exit_with_pride(reason=None,
     return exit_code
 
 
-def main(*args):
+def main(args=None):
+    """
+    :param args:
+        Argument vector to be parsed, ``sys.argv[1:]`` if None
+    """
     from . import RdeChecker, AppException, log
     from ._version import version
 
-    opts = docopt.docopt(__doc__, *args, version=version)
+    opts = docopt.docopt(__doc__,
+                         argv=sys.argv[1:] if args is None else args,
+                         version=version)
     init_logging(level=opts['--log'])
 
     try:
@@ -155,4 +163,4 @@ def main(*args):
         return exit_with_pride(ex, logger=log)
 
 if __name__ == '__main__':
-    main(*sys.argv)
+    sys.exit(main())
