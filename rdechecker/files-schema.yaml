@@ -17,6 +17,7 @@ file_kinds:
 
                 4: [Test location, '[City (Country)]']
 
+                16: [Engine rated power, '[kW]', 'float:']
                 21:
                     - Fuel type. If flexifuel indicate fuel used in the test
                     - '[gasoline/diesel/LPG/NG/biomethane/ethanol/biodiesel]'

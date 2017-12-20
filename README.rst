@@ -22,6 +22,7 @@ Clone git repo and install in *develop* mode to experiment with sample files::
     pip install -e .
 
 Alternatively::
+
     $ pip install git+https://github.com/JRCSTU/rdechecker
 
 Run sample files::
@@ -38,13 +39,19 @@ Currently partial validations are defined only for 2 file "kinds"::
 
 The validations are configured in the ``/rdechecker/tests/files-schema.yaml`` file.
 The most important configuration is in ``file_kinds.sections.lines`` dictionary,
-keyed by the line-number (1-based).  For instance::
+keyed by the line-number (1-based).  For example::
 
                 1: [TEST ID, '[code]']
                 2: [Test date, '[dd.mm.yyyy]', 're:\d\d.\d\d.\d{4}']
+                16: [Engine rated power, '[kW]', 'float:']
 
-Which means that
+Which means that:
+
 - line 1 must have at least 2 "cells", with the exact contents shown.
-- line 2 must have a 3rd cell that satisfy a "date" regular-expression.
+- line 2 in addition must have a 3rd cell that satisfy a "date" regular-expression.
+- line 16  must have 2 fixed-string cells and a float 3rd one.
+
+Some care is needed when using the characters `:[]` because they have
+special meaning in *YAML*.
 
 Note that file ``f2`` does not specify *sections*.
