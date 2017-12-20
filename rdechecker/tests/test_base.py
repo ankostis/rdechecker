@@ -6,11 +6,17 @@
 # You may not use this work except in compliance with the Licence.
 # You may obtain a copy of the Licence at: http://ec.europa.eu/idabc/eupl
 
-import unittest
+import contextlib
+import io
 from os import path as osp
+import unittest
 
-from .. import RdeChecker, _match_section_break
 import ddt
+
+import textwrap as tw
+
+from .. import RdeChecker, __main__ as cmain
+
 
 mydir = osp.dirname(__file__)
 
@@ -19,25 +25,37 @@ mydir = osp.dirname(__file__)
 class TBase(unittest.TestCase):
 
     @ddt.data(
-        ('', 3, 2, False),
-        ('\n', 3, 2, False),
-        ('\n\n\n', 3, 2, False),
+        ('', True),
+        ('\n', True),
+        ('\r\n', True),
 
-        ('\n\n', 3, 2, True),
-        (',,,\n,,,\n', 3, 2, True),
+        (',', True),
+        (',,\n', True),
+        (',,,\r\n', True),
 
-        (',,\n,,,\n', 3, 2, False),
-        (',,,\n,,\n', 3, 2, False),
-        ('\n,,,\n', 3, 2, False),
-        (',,,\n\n', 3, 2, False),
-        (',,,\n,,,\n,,,', 3, 2, False),
+        (' ', False),
+        ('f\n', False),
+        ('\r \n', False),
+
+        (', ', False),
+        (', ,\n', False),
+        (',f,,\r\n', False),
     )
     def test_section_break_match(self, data):
-        got_lines, exp_ncolumns, exp_nlines, exp_result = data
-        got_result = _match_section_break(got_lines,
-                            exp_ncolumns, ',', exp_nlines)
-        assert bool(got_result) is exp_result
+        got_lines, is_break_line = data
+        rde = RdeChecker()
+        assert is_break_line == rde._is_section_break_line(got_lines)
 
     def test_validation(self):
-        rde = RdeChecker(['f1:Sample_Data_Exchange_File.csv'])
-        rde.process_files()
+        assert 0 == cmain.main(['f1:rdechecker/tests/Sample_Data_Exchange_File.csv'])
+
+    def test_list_kinds(self):
+        exp_out = tw.dedent("""
+            f1: Big file
+            f2: The summary file
+        """)
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            assert 0 == cmain.main(['-l'])
+        assert stdout.getvalue().strip() == exp_out.strip()

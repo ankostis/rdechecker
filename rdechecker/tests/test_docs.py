@@ -6,11 +6,7 @@
 # You may not use this work except in compliance with the Licence.
 # You may obtain a copy of the Licence at: http://ec.europa.eu/idabc/eupl
 
-from co2mpas import __main__ as cmain
-from co2mpas import datasync
-import co2mpas
-import io
-import re
+import rdechecker
 import subprocess
 import unittest
 from unittest.mock import patch
@@ -26,7 +22,7 @@ readme_path = osp.join(proj_path, 'README.rst')
 class Doctest(unittest.TestCase):
 
     def test_README_version_opening(self):
-        ver = co2mpas.__version__
+        ver = rdechecker.__version__
         header_len = 20
         mydir = osp.dirname(__file__)
         with open(readme_path) as fd:
