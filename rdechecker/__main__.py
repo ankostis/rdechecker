@@ -151,9 +151,11 @@ def main(args=None):
                          default_fkind=opts['--fkind'],
                          archive=opts['--archive'])
         if opts['--list-fkinds']:
-            rde.list_file_kinds()
+            print(rde.list_file_kinds())
         else:
             rde.process_files()
+
+        return 0
     except AppException as ex:
         log.debug('App exited due to: %r', ex, exc_info=1)
         ## Suppress stack-trace for "expected" errors but exit-code(1).

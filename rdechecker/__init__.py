@@ -233,5 +233,5 @@ class RdeChecker:
                 raise
 
     def list_file_kinds(self):
-        for kind, props in self.schema_dict['file_kinds'].items():
-            print('%s: %s' % (kind, props.get('description')))
+        return '\n'.join('%s: %s' % (kind, props.get('description'))
+                         for kind, props in self.schema_dict['file_kinds'].items())
