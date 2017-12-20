@@ -159,7 +159,8 @@ def main(args=None):
     except AppException as ex:
         log.debug('App exited due to: %r', ex, exc_info=1)
         ## Suppress stack-trace for "expected" errors but exit-code(1).
-        return exit_with_pride(str(ex), logger=log)
+        msg = '%s\n  - %s' % (ex.args[0], '\n  - %s'.join(ex.args[1:]))
+        return exit_with_pride(msg, logger=log)
     except Exception as ex:
         ## Log in DEBUG not to see exception x2, but log it anyway,
         #  in case log has been redirected to a file.

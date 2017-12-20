@@ -202,8 +202,10 @@ class RdeChecker:
         fkind, fpath = parse_file_spec(file_spec)
         if not fkind:
             if not self.default_fkind:
-                raise AppException('No `-f` or per-file <fkind> given for file %r!' %
-                                   file_spec)
+                raise AppException(
+                    "No <fkind> deduced for file %r!"
+                    "\n  Either specify it per-file <fkind>:<fpath> or "
+                    "use default `-f=<fkind>`." % file_spec)
             fkind = self.default_fkind
 
         all_file_kinds = self.schema_dict['file_kinds']
