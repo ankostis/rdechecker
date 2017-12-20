@@ -1,5 +1,5 @@
 ######################################################################
-rdechecker: Real-Driving-Emissions monitoring files validator
+rdechecker: Validate & package Real-Driving-Emissions files.
 ######################################################################
 
 :release:       0.0.0
@@ -11,5 +11,6 @@ rdechecker: Real-Driving-Emissions monitoring files validator
 
 *rdechecker* validates files generated from Real-Driving-Emissions cycle tests,
 before those files are submitted to monitoring bodies.
+Optionally, package and compress those files in a single HDF5 archive.
 
 At the moment, the project was just created.

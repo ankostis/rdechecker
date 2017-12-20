@@ -1,0 +1,28 @@
+title: rdechecker
+decription: The schema describing the Real-Driving-Emissions monitoring files.
+version: 0.0.0
+file_kinds:
+    f1:
+        ncolumns: 52
+        ## 1-based `start/end` offsets.
+        #  Keep them sorted for easier debugging offsets.
+        sections:
+            - start:    1
+              end:      47
+              delimiter: ","
+
+            - start:    51
+              end:      62
+              delimiter: ","
+
+            - start:    71
+              end:      89
+              delimiter: ","
+
+            - start:    96
+              end:      145
+              delimiter: ","
+
+            - start:    198
+              end:
+              delimiter: ","
