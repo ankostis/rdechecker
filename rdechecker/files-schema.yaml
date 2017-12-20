@@ -3,6 +3,7 @@ decription: The schema describing the Real-Driving-Emissions monitoring files.
 version: 0.0.0
 file_kinds:
     f1:
+        description: "Big file"
         delimiter: ","
         ncolumns: 52
         ## 1-based `start/end` offsets.
@@ -34,6 +35,7 @@ file_kinds:
               end:
 
     f2:
+        description: "The summary file"
         lines:
             4: ["Trip average speed ", '[km/h]', 'float:']
             5: ["Trip maximum speed ", '[km/h]', 'float:']

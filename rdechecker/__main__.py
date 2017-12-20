@@ -21,7 +21,8 @@ WHERE:
                      [default: INFO]
 
 EXAMPLES:
-  rdecheck  f1:/foo/bar.csv  f2:/foo/baz.txt  -f1 f1:-
+  >>> rdechek  -l
+  rdechek  f1:Sample_Data_Exchange_File.csv  f2:Sample_Reporting_File_1.csv
 """
 
 import logging
@@ -130,7 +131,10 @@ def main(*args):
 
     try:
         rde = RdeChecker(*opts['<file-spec>'], archive=opts['--archive'])
-        rde.process_files()
+        if opts['-l']:
+            rde.list_file_kinds()
+        else:
+            rde.process_files()
     except AppException as ex:
         log.debug('App exited due to: %r', ex, exc_info=1)
         ## Suppress stack-trace for "expected" errors but exit-code(1).
