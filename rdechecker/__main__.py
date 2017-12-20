@@ -43,7 +43,8 @@ import docopt
 import functools as fnt
 
 
-__package__ = 'rdechecker'  # @ReservedAssignment pep-366
+if __package__ is None:
+    __package__ = 'rdechecker'  # @ReservedAssignment pep-366
 
 
 def init_logging(level='DEBUG', frmt=None, color=True, **kw):
