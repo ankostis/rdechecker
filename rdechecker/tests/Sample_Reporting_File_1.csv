@@ -1,0 +1,144 @@
+Total trip distance ,[km],90.908267
+Total trip duration ,[h:min:s], 01:37:03
+Total stop time ,[min:s], 09:02
+Trip average speed ,[km/h],56.202947
+Trip maximum speed ,[km/h],142.81235
+Average THC emissions ,[ppm],
+Average CH4 emissions ,[ppm],
+Average NMHC emissions ,[ppm],
+Average CO emissions ,[ppm],15.669671
+Average CO2 emissions ,[ppm],119969.0663
+Average NOX emissions ,[ppm],6.251236
+Average PN emissions ,[#/m3],
+Average exhaust mass flow rate ,[kg/s],0.010729
+Average exhaust temperature ,[K],368.673416
+Maximum exhaust temperature ,[K],486.700018
+Cumulated THC mass ,[g],
+Cumulated CH4 mass ,[g],
+Cumulated NMHC mass ,[g],
+Cumulated CO mass ,[g],0.698738
+Cumulated CO2 mass ,[g],12029.52855
+Cumulated NOX mass ,[g],0.718403
+Cumulated PN mass ,[#],
+Total trip THC emissions ,[mg/km],
+Total trip CH4 emissions ,[mg/km],
+Total trip NMHC emissions ,[mg/km],
+Total trip CO emissions ,[mg/km],7.686183
+Total trip CO2 emissions ,[g/km],132.326013
+Total trip NOX emissions ,[mg/km],7.902509
+Total trip PN emissions ,[#/km],
+Distance urban part ,[km],34.79344
+Duration urban part ,[h:min:s], 01:01:42
+Stop time urban part ,[min:s], 09:02
+Average speed urban part,[km/h],33.834788
+Maximum speed urban part,[km/h],59.962841
+Average urban THC concentration ,[ppm],
+Average urban CH4 concentration ,[ppm],
+Average urban NMHC concentration ,[ppm],
+Average urban CO concentration ,[ppm],23.837394
+Average urban CO2 concentration ,[ppm],115968.4025
+Average urban NOX concentration ,[ppm],7.57524
+Average urban PN concentration ,[#/m3],
+Average urban exhaust mass flow rate ,[kg/s],0.007546
+Average urban exhaust temperature ,[K],348.680307
+Maximum urban exhaust temperature ,[K],435.4
+Cumulated urban THC mass ,[g],
+Cumulated urban CH4 mass ,[g],
+Cumulated urban NMHC mass ,[g],
+Cumulated urban CO mass ,[g],0.645311
+Cumulated urban CO2 mass ,[g],5241.290533
+Cumulated urban NOX mass ,[g],0.458796
+Cumulated urban PN mass ,[#],
+Urban THC emissions ,[mg/km],
+Urban CH4 emissions ,[mg/km],
+Urban NMHC emissions ,[mg/km],
+Urban CO emissions ,[mg/km],18.546904
+Urban CO2 emissions ,[g/km],150.640192
+Urban NOX emissions ,[mg/km],13.186292
+Urban PN emissions ,[#/km],
+Distance rural part ,[km],30.06576
+Duration rural part ,[h:min:s], 00:22:28
+Stop time rural part ,[min:s], 00:00
+Average speed rural part,[km/h],80.294316
+Maximum speed rural part,[km/h],89.808255
+Average rural THC concentration ,[ppm],
+Average rural CH4 concentration ,[ppm],
+Average rural NMHC concentration ,[ppm],
+Average rural CO concentration ,[ppm],0.821008
+Average rural CO2 concentration ,[ppm],126868.8534
+Average rural NOX concentration ,[ppm],4.777819
+Average rural PN concentration ,[#/m3],
+Average rural exhaust mass flow rate ,[kg/s],0.013281
+Average rural exhaust temperature ,[K],383.894955
+Maximum rural exhaust temperature ,[K],450.200018
+Cumulated rural THC mass ,[g],
+Cumulated rural CH4 mass ,[g],
+Cumulated rural NMHC mass ,[g],
+Cumulated rural CO mass ,[g],0.007638
+Cumulated rural CO2 mass ,[g],3500.770371
+Cumulated rural NOX mass ,[g],0.173882
+Cumulated rural PN mass ,[#],
+Rural THC emissions ,[mg/km],
+Rural CH4 emissions ,[mg/km],
+Rural NMHC emissions ,[mg/km],
+Rural CO emissions ,[mg/km],0.254043
+Rural CO2 emissions ,[g/km],116.437114
+Rural NOX emissions ,[mg/km],5.783382
+Rural PN emissions ,[#/km],
+Distance motorway part ,[km],26.049066
+Duration motorway part ,[h:min:s], 00:12:53
+Stop time motorway part ,[min:s], 00:00
+Average speed motorway part,[km/h],121.315187
+Maximum speed motorway part,[km/h],142.81235
+Average motorway THC concentration ,[ppm],
+Average motorway CH4 concentration ,[ppm],
+Average motorway NMHC concentration ,[ppm],
+Average motorway CO concentration ,[ppm],2.447276
+Average motorway CO2 concentration ,[ppm],127096.5497
+Average motorway NOX concentration ,[ppm],2.479826
+Average motorway PN concentration ,[#/m3],
+Average motorway exhaust mass flow rate ,[kg/s],0.021522
+Average motorway exhaust temperature ,[K],437.878918
+Maximum motorway exhaust temperature ,[K],486.700018
+Cumulated motorway THC mass ,[g],
+Cumulated motorway CH4 mass ,[g],
+Cumulated motorway NMHC mass ,[g],
+Cumulated motorway CO mass ,[g],0.045789
+Cumulated motorway CO2 mass ,[g],3287.467648
+Cumulated motorway NOX mass ,[g],0.085725
+Cumulated motorway PN mass ,[#],
+Motorway THC emissions ,[mg/km],
+Motorway CH4 emissions ,[mg/km],
+Motorway NMHC emissions ,[mg/km],
+Motorway CO emissions ,[mg/km],1.757798
+Motorway CO2 emissions ,[g/km],126.202897
+Motorway NOX emissions ,[mg/km],3.290912
+Motorway PN emissions ,[#/km],
+Cold start distance ,[km],2.33
+Cold start duration ,[h:min:s],00:05:00
+Cold start stop time ,[min:s],60
+Cold start average speed ,[km/h],28.5
+Cold start maximum speed ,[km/h],55
+Urban distance driven with ICE on,[km],34.79344
+Speed signal used,[GPS/ECU/sensor],GPS
+T4253H-Filter used,[yes/no],no
+Duration of longest stop period,[s],54
+urban stops > 10 seconds,[number],12
+Idling time after 1st ignition,[s],7
+Motorway speed share > 145 km/h,[%],0.1
+Urban datasets with acceleration values > 0.1 m/s2,[number],845
+Rural datasets with acceleration values > 0.1 m/s2,[number],543
+Motorway datasets with acceleration values > 0.1 m/s2,[number],268
+Maximum altitude during the trip,[m],215
+Maximum ambient temperature,[K],293.15
+Minimum ambient temperature,[K],285.65
+Trip done in altitude extended conditions,[yes/no],no
+Trip done in ambient temperature extended conditions,[yes/no],no
+Soaking maximum temperature,[K],291.15
+Soaking minimum temperature,[K],290.65
+Soaking done in ambient temperature extended conditions,[yes/no],no
+Drive mode for ICE if any,[normal/sport/eco],
+Drive mode for PHEV,[charge sustaining/charge depleting/battery charge/mild operation],
+Any active safety system disabled during the test?,[No/ESP/ABS/AEB],No
+Start-stop system active,[yes/no/no SS],no SS
+Air conditioning,[Off/On],Off
