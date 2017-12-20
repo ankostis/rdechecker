@@ -9,20 +9,28 @@
 Validate & archive Real-Driving-Emissions CSV-files (TODO: Excel).
 
 USAGE:
-  rdecheck [--log=<level>] [--archive] <file-spec> ...
+  rdecheck [--log=<level>] [-a] <file-spec>...
   rdecheck -l
 
 WHERE:
-  <file-spec>       :a string like: <file-kind>:<fpath>; use `-` <fpath> for STDIN;
-                    use `-l` to see available kfile-kinds.
-  --archive         :archive all input files into an HDF5 archive [default: false]
-  -l                :list available file kinds
-  --log=<level>     :integer or string: DEBUG:10, INFO:20, WARN:30, ERROR:40, FATAL:50
-                     [default: INFO]
+  <file-spec>                 A string like: [<fkind>:]<fpath>.
+                              Use `-` <fpath> for STDIN; use `rdecheck -l` to list
+                              available file-kinds.
+  -l, --list-fkinds           List available file-kinds.
+  -a, --archive               TODO: Archive all input files into an HDF5 archive [default: false]
+  --log=<level>               Set logging level to integer or string:
+                              DEBUG:10, INFO:20, WARN:30, ERROR:40, FATAL:50
+                              [default: INFO]
+  -h, --help                  Show this screen.
 
 EXAMPLES:
-  >>> rdechek  -l
-  rdechek  f1:Sample_Data_Exchange_File.csv  f2:Sample_Reporting_File_1.csv
+  $ rdechek  -l
+  f1: Big file
+  f2: The summary file
+
+  $ rdechek  f1:Sample_Data_Exchange_File.csv  f2:Sample_Reporting_File_1.csv
+  15:33:26       : INFO:rdechecker:f1:Sample_Data_Exchange_File.csv: OK
+  15:33:26       : INFO:rdechecker:f2:Sample_Reporting_File_1.csv: OK
 """
 
 import logging
@@ -131,7 +139,7 @@ def main(*args):
 
     try:
         rde = RdeChecker(*opts['<file-spec>'], archive=opts['--archive'])
-        if opts['-l']:
+        if opts['--list-fkinds']:
             rde.list_file_kinds()
         else:
             rde.process_files()

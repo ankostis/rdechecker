@@ -21,13 +21,13 @@ Clone git repo and install in *develop* mode to experiment with sample files::
     cd rdechecker.git/
     pip install -e .
 
-Alternatively::
+(alternatively use: ``pip install git+https://github.com/JRCSTU/rdechecker.git``).
 
-    $ pip install git+https://github.com/JRCSTU/rdechecker
+Run sample files (assumes git cloned locally, above)::
 
-Run sample files::
+    $ cd rdechecker/tests/
+    $ rdechek  f1:Sample_Data_Exchange_File.csv f2:Sample_Reporting_File_1.csv
 
-    $ rdechek  f1:rdechecker/tests/Sample_Data_Exchange_File.csv f2:rdechecker/tests/Sample_Reporting_File_1.csv
 
 Validations
 ===========
