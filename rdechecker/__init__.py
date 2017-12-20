@@ -214,6 +214,7 @@ class RdeChecker:
         for fspec in self.file_specs:
             try:
                 self.validate_filespec(fspec)
+                log.info('%s: OK', fspec)
             except Exception as ex:
                 ex.args += ("file-spec: %r" % fspec, )
                 raise
