@@ -13,17 +13,17 @@ USAGE:
   rdecheck -l
 
 WHERE:
-  <file-spec>                 A string like: [<fkind>:]<fpath>.
-                              Use `-` <fpath> for STDIN; use `rdecheck -l` to list
-                              available file-kinds.
-                              No need to specify <fkind> if `-f=<fkind>` given.
-  -f=<fkind>, --kind=<fkind>  Assume default <fkind> for all <file-spec> given.
-  -l, --list-fkinds           List available file-kinds.
-  -a, --archive               TODO: Archive all input files into an HDF5 archive [default: false]
-  --log=<level>               Set logging level to integer or string:
-                              DEBUG:10, INFO:20, WARN:30, ERROR:40, FATAL:50
-                              [default: INFO]
-  -h, --help                  Show this screen.
+  <file-spec>                   A string like: [<fkind>:]<fpath>.
+                                Use `-` <fpath> for STDIN; use `rdecheck -l` to list
+                                available file-kinds.
+                                No need to specify <fkind> if `-f=<fkind>` given.
+  -f=<fkind>, --fkind=<fkind>   Assume default <fkind> for all <file-spec> given.
+  -l, --list-fkinds             List available file-kinds.
+  -a, --archive                 TODO: Archive all input files into an HDF5 archive [default: false]
+  --log=<level>                 Set logging level to integer or string:
+                                DEBUG:10, INFO:20, WARN:30, ERROR:40, FATAL:50
+                                [default: INFO]
+  -h, --help                    Show this screen.
 
 EXAMPLES:
   $ rdechek  -l
@@ -147,7 +147,9 @@ def main(args=None):
     init_logging(level=opts['--log'])
 
     try:
-        rde = RdeChecker(*opts['<file-spec>'], archive=opts['--archive'])
+        rde = RdeChecker(*opts['<file-spec>'],
+                         default_fkind=opts['--fkind'],
+                         archive=opts['--archive'])
         if opts['--list-fkinds']:
             rde.list_file_kinds()
         else:

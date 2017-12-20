@@ -26,13 +26,14 @@ def _parse_yaml(finp, drop_comments=False):
     return yaml.load(finp, yaml.Loader if drop_comments else yaml.RoundTripLoader)
 
 
-_file_spec_regex = re.compile(r'^(\w+):(.*)$')
+_file_spec_regex = re.compile(r'^(?:(\w+):)?(.*)$')
 def parse_file_spec(file_spec):
     m = _file_spec_regex.match(file_spec)
     if not m:
         raise AppException('Invalid file-spec %r!\n  Expected: <file-kind>:<fpath>' %
                            file_spec)
     return m.groups()
+
 
 _cell_format_regex = re.compile(r'^(?:(int|float|re):)?(.*)$')
 def validate_cell_format(cell_format, cell):
@@ -68,7 +69,9 @@ def validate_cell_format(cell_format, cell):
         raise AppException(str(ex))
 
 class RdeChecker:
-    def __init__(self, *file_specs, archive=False, delimiter=','):
+    def __init__(self, *file_specs,
+                 default_fkind=None, archive=False, delimiter=','):
+        self.default_fkind = default_fkind
         self.file_specs = file_specs
         self.archive = archive
         self.delimiter = delimiter
@@ -196,13 +199,19 @@ class RdeChecker:
         """
         When no files given, parse STDIN.
         """
-        kind, fpath = parse_file_spec(file_spec)
+        fkind, fpath = parse_file_spec(file_spec)
+        if not fkind:
+            if not self.default_fkind:
+                raise AppException('No `-f` or per-file <fkind> given for file %r!' %
+                                   file_spec)
+            fkind = self.default_fkind
+
         all_file_kinds = self.schema_dict['file_kinds']
         try:
-            kind_schema = all_file_kinds[kind]
+            kind_schema = all_file_kinds[fkind]
         except KeyError:
-            raise AppException('Unknown file-kind %r!\n  Must be one of %s' %
-                             (kind, tuple(all_file_kinds)))
+            raise AppException('Unknown file-fkind %r!\n  Must be one of %s' %
+                             (fkind, tuple(all_file_kinds)))
 
         if fpath and fpath != '-':
             with open(fpath, 'rt') as fp:
@@ -215,6 +224,10 @@ class RdeChecker:
             try:
                 self.validate_filespec(fspec)
                 log.info('%s: OK', fspec)
+            except OSError as ex:
+                raise AppException('%s: %s' % (type(ex).__name__, str(ex)),
+                                   "file-spec: %r" % fspec) from ex
+                raise
             except Exception as ex:
                 ex.args += ("file-spec: %r" % fspec, )
                 raise
