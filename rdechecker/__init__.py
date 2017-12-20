@@ -35,7 +35,6 @@ def parse_file_spec(file_spec):
     return m.groups()
 
 
-_cell_format_regex = re.compile(r'^(?:(int|float|re):)?(.*)$')
 def validate_cell_format(cell_format, cell):
     # TODO: Use *schema* lbrary: https://pypi.python.org/pypi/schema/
     def assert_equal(exp, got):
@@ -50,9 +49,11 @@ def validate_cell_format(cell_format, cell):
         None: assert_equal,
         'int': int,
         'float': float,
-        're': assert_regex,
+        'regex': assert_regex,
     }
-    m = _cell_format_regex.match(cell_format)
+    validation_keys = '|'.join(k for k in dtype_funcs if k)
+    cell_format_regex = re.compile(r'^(?:(%s):)?(.*)$' % validation_keys)
+    m = cell_format_regex.match(cell_format)
     dtype = m.group(1)
     arg = m.group(2)
     args = []

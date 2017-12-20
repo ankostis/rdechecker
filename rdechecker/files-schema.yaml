@@ -13,7 +13,7 @@ file_kinds:
               end:      47
               lines:
                 1: [TEST ID, '[code]']
-                2: [Test date, '[dd.mm.yyyy]', 're:\d\d.\d\d.\d{4}']
+                2: [Test date, '[dd.mm.yyyy]', 'regex:\d\d.\d\d.\d{4}']
 
                 4: [Test location, '[City (Country)]']
 
@@ -21,7 +21,7 @@ file_kinds:
                 21:
                     - Fuel type. If flexifuel indicate fuel used in the test
                     - '[gasoline/diesel/LPG/NG/biomethane/ethanol/biodiesel]'
-                    - 're:gasoline|diesel|LPG|NG|biomethane|ethanol|biodiesel'
+                    - 'regex:gasoline|diesel|LPG|NG|biomethane|ethanol|biodiesel'
 
             - start:    51
               end:      62
