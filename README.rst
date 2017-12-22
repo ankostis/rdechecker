@@ -29,29 +29,35 @@ Run sample files (assumes git cloned locally, above)::
     $ rdechek  f1:Sample_Data_Exchange_File.csv f2:Sample_Reporting_File_1.csv
 
 
-Validations
-===========
-Currently partial validations are defined only for 2 file "kinds"::
+Validation Rules
+================
+Currently partial CSV-cell validation *rules* are defined only for 2 file "kinds"::
 
     $ rdechek -l
     f1: Big file
     f2: The summary file
 
-The validations are configured in the ``/rdechecker/tests/files-schema.yaml`` file.
-The most important configuration is in ``file_kinds.sections.lines`` dictionary,
-keyed by the line-number (1-based).  For example::
+The rules are configured in the ``/rdechecker/tests/files-schema.yaml`` file.
+They are defined in hierarachy:
 
-                1: [TEST ID, '[code]']
-                2: [Test date, '[dd.mm.yyyy]', 're:\d\d.\d\d.\d{4}']
-                16: [Engine rated power, '[kW]', 'float:']
+- ``file_kinds.<file-kind>.lines`` or
+- ``file_kinds.<file-kind>.sections.lines`` (for files with sections).
 
-Which means that:
+and they are keyed by the line-number (1-based).
 
-- line 1 must have at least 2 "cells", with the exact contents shown.
+For example::
+
+                1: [TEST ID, '[code]', {req: null}]
+                2: [Test date, '[dd.mm.yyyy]', {regex: '\d\d.\d\d.\d{4}'}]
+                16: [Engine rated power, '[kW]', {float: null}]
+
+which means that:
+
+- line 1 must have at least 2 "cells" with the exact contents shown, plus
+  a required last cell.
 - line 2 in addition must have a 3rd cell that satisfy a "date" regular-expression.
 - line 16  must have 2 fixed-string cells and a float 3rd one.
 
-Some care is needed when using the characters `:[]` because they have
-special meaning in *YAML*.
-
-Note that file ``f2`` does not specify *sections*.
+.. Tip::
+   When writting validations, extra care is needed with characters `:[],{}`
+   (among others) because they have special meaning in *YAML*.

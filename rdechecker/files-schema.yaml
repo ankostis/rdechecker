@@ -12,22 +12,24 @@ file_kinds:
             - start:    1
               end:      47
               lines:
-                1: [TEST ID, '[code]']
-                2: [Test date, '[dd.mm.yyyy]', 'regex:\d\d.\d\d.\d{4}']
+                1: [TEST ID, '[code]', {req: null}]
+                2: [Test date, '[dd.mm.yyyy]', {regex: '\d\d.\d\d.\d{4}'}]
 
                 4: [Test location, '[City (Country)]']
 
-                16: [Engine rated power, '[kW]', 'float:']
+                16: [Engine rated power, '[kW]', {float: null}]
                 21:
                     - Fuel type. If flexifuel indicate fuel used in the test
                     - '[gasoline/diesel/LPG/NG/biomethane/ethanol/biodiesel]'
-                    - 'regex:gasoline|diesel|LPG|NG|biomethane|ethanol|biodiesel'
+                    - regex: gasoline|diesel|LPG|NG|biomethane|ethanol|biodiesel
 
             - start:    51
               end:      62
 
             - start:    71
               end:      89
+              lines:
+                81: [Span reference value THC, '[ppm]', {_float: null}]
 
             - start:    96
               end:      145
@@ -38,5 +40,5 @@ file_kinds:
     f2:
         description: "The summary file"
         lines:
-            4: ["Trip average speed ", '[km/h]', 'float:']
-            5: ["Trip maximum speed ", '[km/h]', 'float:']
+            4: ["Trip average speed ", '[km/h]', {float: null}]
+            5: ["Trip maximum speed ", '[km/h]', {float: null}]

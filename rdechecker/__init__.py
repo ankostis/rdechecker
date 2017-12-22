@@ -6,6 +6,7 @@
 # You may not use this work except in compliance with the Licence.
 # You may obtain a copy of the Licence at: http://ec.europa.eu/idabc/eupl
 
+from collections import OrderedDict
 import logging
 import re
 import sys
@@ -21,9 +22,19 @@ log = logging.getLogger(__name__)
 class AppException(Exception):
     pass
 
+class SchemaError(AppException):
+    pass
 
-def _parse_yaml(finp, drop_comments=False):
-    return yaml.load(finp, yaml.Loader if drop_comments else yaml.RoundTripLoader)
+
+def parse_yaml(finp, drop_comments=False, **kw):
+    return yaml.load(finp,
+                     Loader=yaml.Loader if drop_comments else yaml.RoundTripLoader,
+                     **kw)
+
+def dump_yaml(content, fout, drop_comments=False, **kw):
+    return yaml.dump(content, fout,
+                     Dumper=yaml.Dumper if drop_comments else yaml.RoundTripDumper,
+                     **kw)
 
 
 _file_spec_regex = re.compile(r'^(?:(\w+):)?(.*)$')
@@ -35,39 +46,142 @@ def parse_file_spec(file_spec):
     return m.groups()
 
 
-def validate_cell_format(cell_format, cell):
-    # TODO: Use *schema* lbrary: https://pypi.python.org/pypi/schema/
-    def assert_equal(exp, got):
+class CellRules:
+    """
+    Check CSV input-values (the "cells") against "cell-rules" templates.
+
+    - A "cell-rule" can be either a plain string, or a single-kv-pair dictionary::
+
+          {<rule-key>: <arg>}
+
+      where:
+
+        - <rule-key>   :one of the keys in :attr:`rule_funcs` map (see constructor).
+        - <arg>        :(optional) arg to the rule's internal function
+
+    - pure strings are simply checked for equality against the cell value.
+    - any <rule-key> starting with underscore(`_`) denotes optionality:
+      it is checked only if cell-value is not missing.
+      NOTE that for CSVs, a missing value is the one between 2 consecutive
+      commas (`,,`);  other symbols like `None`, `NA`, `-` are NOT missing
+      (optionality check will fail)
+    - TODO: multiple mappings ANDed together in the order declared
+      (all must pass).
+
+    The functions must raise, or return a transformed value (like *schema* library).
+
+    A sample YAML for some csv row like that::
+
+      - fixed string,
+      - _istr, FOO
+      - _int
+      - req]
+      - _req
+
+    ...denotes a 5-cell CSV row:
+
+      - 1st cell must equal to "fixed string"
+      - 2nd cell must be "FOO" (case insensitively), or missing.
+      - 3rd cell must be an integer with 2 digits (redundant)
+      - 4th cell must not be missing or empty-string.
+      - 5th cell must not be missing BUT can be the empty-string.
+
+    Therefore, the following CSV-rows PASS::
+
+          fixed string,,,anything,
+          fixed string,,12,x,z
+          "fixed string","FOO","00","x",""
+
+    ...while the following CSV-rows FAIL::
+
+          other string,,x,z
+          fixed string ,,x,z
+          fixed string,,-12
+          fixed string,foo,00
+          "fixed string","FOO",00,"","z"
+          fixed string,FOO,00,x,
+    """
+
+    def __init__(self):
+        self.rule_funcs = {
+            'str': self._assert_equal,
+            '_str': self._optional(self._assert_equal),
+            'istr': self._assert_equal_ci,
+            '_istr': self._optional(self._assert_equal_ci),
+            'regex': self._assert_regex,     # Save Schema instance.
+            '_regex': self._optional(self._assert_regex),
+            'int': int,                     # Save Schema instance.
+            '_int': self._optional(int),
+            'float': float,
+            '_float': self._optional(float),
+            'req': self._assert_non_empty,
+            '_req': self._optional(self._assert_non_empty),
+        }
+
+    def _assert_equal(self, exp, got):
+        "equal the given text"
         if exp != got:
-            raise AppException('%r != %r' % (exp, got))
+            raise AppException("%r does not equal %r!" % (got, exp))
+        return got
 
-    def assert_regex(regex, got):
+    def _assert_equal_ci(self, exp, got):
+        "equal(caseless) the given text"
+        if exp != got:
+            raise AppException("%r does not equal(caseless) %r!" % (got, exp))
+        return got
+
+    def _assert_regex(self, regex, got):
+        "match the given regex"
         if not re.match(regex, got):
-            raise AppException('%r !~ %r' % (regex, got))
+            raise AppException("%r does not match regex %r!" % (got, regex))
+        return got
 
-    dtype_funcs = {
-        None: assert_equal,
-        'int': int,
-        'float': float,
-        'regex': assert_regex,
-    }
-    validation_keys = '|'.join(k for k in dtype_funcs if k)
-    cell_format_regex = re.compile(r'^(?:(%s):)?(.*)$' % validation_keys)
-    m = cell_format_regex.match(cell_format)
-    dtype = m.group(1)
-    arg = m.group(2)
-    args = []
-    func = dtype_funcs[dtype]
-    if arg:
-        args.append(arg)
-    args.append(cell)
-    ## Should scream if invalid....
-    try:
-        func(*args)
-    except AppException:
-        raise
-    except Exception as ex:
-        raise AppException(str(ex))
+    def _assert_non_empty(self, got):
+        "not be empty"
+        if len(got) == 0:
+            raise AppException("must not be empty!")
+        return got
+
+    def _optional(self, func):
+        def checker(*args):
+            cell = args[-1]
+            if cell is not None:
+                return func(*args)
+
+        checker.__doc__ = "%s (or missing)" % func.__doc__
+        return checker
+
+    def _evaluate_rule(self, rule, arg, cell):
+        func = self.rule_funcs[rule]
+        args =(arg, cell) if arg else (cell,)
+
+        ## Rule-functions scream when invalid.
+        try:
+            return func(*args)
+        except AppException as ex:
+            ex.args += ("cell: %s" % cell,
+                        "rule: %s(%s)" % (rule, arg or ''))
+            raise
+        except Exception as ex:
+            ex.args += ("cell: %s" % cell,
+                        "rule: %s(%s)" % (rule, arg or ''))
+            raise AppException(*ex.args)
+
+    def validate_cell_rule(self, cell_rules, cell):
+        if isinstance(cell_rules, dict):
+            for rule, arg in cell_rules.items():
+                cell = self._evaluate_rule(rule, arg, cell)
+        elif isinstance(cell_rules, str):
+            cell = self._evaluate_rule('str', cell_rules, cell)
+        else:
+            raise SchemaError("Unexpected type %s for cell-rules %r!"
+                               "\n  One of (dict, string) expected." %
+                               (type(cell_rules), cell_rules))
+
+    def list_rules(self):
+        return OrderedDict([(rule, func.__doc__.split('\n', maxsplit=1)[0])
+                for rule, func in self.rule_funcs.items()])
+
 
 class RdeChecker:
     def __init__(self, *file_specs,
@@ -77,6 +191,7 @@ class RdeChecker:
         self.archive = archive
         self.delimiter = delimiter
         self._read_files_schema()
+        self.cellcheck = CellRules()
 
         if self.archive:
             raise NotImplemented('HDF5-archiving not ready yet.')
@@ -84,7 +199,7 @@ class RdeChecker:
     def _read_files_schema(self):
         with pkg_resources.resource_stream(__name__,   # @UndefinedVariable
                                            'files-schema.yaml') as finp:
-            self.schema_dict = _parse_yaml(finp, True)
+            self.schema_dict = parse_yaml(finp, True)
 
     def _is_section_break_line(self, line):
         ## Delete all chars and expect line to be empty.
@@ -169,30 +284,31 @@ class RdeChecker:
 
                     yield i, cur_lines_schema and cur_lines_schema.get(i), line
             except Exception as ex:
-                ex.args += ("line-no: %i" % i, )
+                ex.args += ("row: %i" % i, )
                 raise
 
     def _validate_line(self, r, line_schema, line):
         if line_schema:
-            for c, (cell_format, cell) in enumerate(zip(line_schema,
+            # FIXME: use pandas to parse CSV.
+            for c, (cell_rules, cell) in enumerate(zip(line_schema,
                                                         line.split(self.delimiter))):
-                if cell_format:
+                if cell_rules:
                     try:
-                        validate_cell_format(cell_format, cell)
+                        self.cellcheck.validate_cell_rule(cell_rules, cell)
                     except Exception as ex:
-                        ex.args += ("cell-format: %s" % cell_format,
-                                    "column: %i" % c,
-                                    "row: %i" % r)
+                        ex.args += ("column: %i" % c, "row: %i" % r)
                         raise
 
     def validate_stream(self, kind_schema, fp):
         sections_schema = kind_schema.get('sections')
         if sections_schema:
+            # FIXME: use pandas to parse CSV.
             for line_spec in self._yield_section_lines(sections_schema, fp):
                 self._validate_line(*line_spec)
         else:
             lines_schema = kind_schema.get('lines')
             if lines_schema:
+                # FIXME: use pandas to parse CSV.
                 for i, line in enumerate(fp, 1):
                     self._validate_line(i, lines_schema.get(i), line)
 
@@ -236,5 +352,5 @@ class RdeChecker:
                 raise
 
     def list_file_kinds(self):
-        return '\n'.join('%s: %s' % (kind, props.get('description'))
-                         for kind, props in self.schema_dict['file_kinds'].items())
+        return OrderedDict([(kind, props.get('description'))
+                for kind, props in self.schema_dict['file_kinds'].items()])
