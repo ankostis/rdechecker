@@ -152,7 +152,13 @@ class CellRules:
         return checker
 
     def _evaluate_rule(self, rule, arg, cell):
-        func = self.rule_funcs[rule]
+        try:
+            func = self.rule_funcs[rule]
+        except KeyError as ex:
+            raise SchemaError("Unknown rule %r!" % rule,
+                              "cell: %s" % cell,
+                              "rule: %s(%s)" % (rule, arg or ''))
+
         args =(arg, cell) if arg else (cell,)
 
         ## Rule-functions scream when invalid.
@@ -250,7 +256,7 @@ class RdeChecker:
     def _yield_section_lines(self, sections_schema, fp):
         """
         :return:
-            A generator yielding for each line the tuple::
+            A generator yielding for each non break-section line the tuple::
 
                 (i, line_schema, line)
 
