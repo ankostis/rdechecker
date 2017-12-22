@@ -2,8 +2,8 @@
 rdechecker: Validate & archive Real-Driving-Emissions files.
 ######################################################################
 
-:release:       0.0.1
-:date:          2017-12-20 08:00:00
+:release:       0.0.2
+:date:          2017-12-22 04:53:35
 :home:          https://github.com/JRCSTU/rdechecker/
 :keywords:      rde, real-driving-emissions, vehicle-emissions, file-format, validation
 :copyright:     2017 European Commission (`JRC <https://ec.europa.eu/jrc/>`_)
