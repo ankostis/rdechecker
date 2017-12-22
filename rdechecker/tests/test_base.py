@@ -49,13 +49,14 @@ class TBase(unittest.TestCase):
     def test_validation(self):
         assert 0 == cmain.main(['f1:rdechecker/tests/Sample_Data_Exchange_File.csv'])
 
-    def test_list_kinds(self):
+    def test_list_fkinds(self):
         exp_out = tw.dedent("""
-            f1: Big file
-            f2: The summary file
+            - f1: Big file
+            - f2: The summary file
         """)
 
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            assert 0 == cmain.main(['-l'])
-        assert stdout.getvalue().strip() == exp_out.strip()
+            assert 0 == cmain.main('-l fkinds'.split())
+        ## `endswith()` to ignore `!omap` yaml-tag.
+        assert stdout.getvalue().strip().endswith(exp_out.strip())

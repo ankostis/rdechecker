@@ -58,6 +58,22 @@ which means that:
 - line 2 in addition must have a 3rd cell that satisfy a "date" regular-expression.
 - line 16  must have 2 fixed-string cells and a float 3rd one.
 
+You may view all available rules with::
+
+    $ rdechecker -l rules
+    - str: equal the given text
+    - _str: be missing or equal the given text
+    - istr: equal(caseless) the given text
+    - _istr: be missing or equal(caseless) the given text
+    - regex: match the given regex
+    - _regex: be missing or match the given regex
+    - int: int(x=0) -> integer
+    - _int: be missing or int(x=0) -> integer
+    - float: float(x) -> floating point number
+    - _float: be missing or float(x) -> floating point number
+    - req: not be empty
+    - _req: be missing or not be empty
+
 .. Tip::
    When writting validations, extra care is needed with characters `:[],{}`
    (among others) because they have special meaning in *YAML*.

@@ -10,7 +10,7 @@ Validate & archive Real-Driving-Emissions CSV-files (TODO: Excel).
 
 USAGE:
   rdecheck [--log=<level>] [-a] [-f=<fkind>] <file-spec>...
-  rdecheck -l
+  rdecheck -l [fkinds | rules]
 
 WHERE:
   <file-spec>                   A string like: [<fkind>:]<fpath>.
@@ -18,13 +18,13 @@ WHERE:
                                 available file-kinds.
                                 No need to specify <fkind> if `-f=<fkind>` given.
   -f=<fkind>, --fkind=<fkind>   Assume default <fkind> for all <file-spec> given.
-  -l, --list-fkinds             List available file-kinds.
   -a, --archive                 TODO: Archive all input files into an HDF5 archive [default: false]
   --log=<level>                 Set logging level to integer or string:
                                 DEBUG:10, INFO:20, WARN:30, ERROR:40, FATAL:50
                                 [default: INFO]
+  -l, --list                    List available file-kinds and/or CSV cell-rules.
   -h, --help                    Show this screen.
-
+  
 EXAMPLES:
   $ rdechek  -l
   f1: Big file
@@ -35,6 +35,7 @@ EXAMPLES:
   15:33:26       : INFO:rdechecker:f2:Sample_Reporting_File_1.csv: OK
 """
 
+from collections import OrderedDict
 import logging
 import sys
 
@@ -133,12 +134,34 @@ def exit_with_pride(reason=None,
     return exit_code
 
 
+def _build_infos(fkinds, rules):
+    from . import RdeChecker, CellRules
+
+    show_all = not (fkinds or rules)
+    out = OrderedDict()
+    if show_all or fkinds:
+        rde = RdeChecker()
+        l = rde.list_file_kinds()
+        if show_all:
+            out['fkinds'] = l
+        else:
+            out.update(l)
+    if show_all or rules:
+        l = CellRules().list_rules()
+        if show_all:
+            out['rules'] = l
+        else:
+            out.update(l)
+
+    return out
+
+
 def main(args=None):
     """
     :param args:
         Argument vector to be parsed, ``sys.argv[1:]`` if None
     """
-    from . import RdeChecker, AppException, log
+    from . import AppException, SchemaError, log, RdeChecker, dump_yaml
     from ._version import version
 
     opts = docopt.docopt(__doc__,
@@ -147,12 +170,13 @@ def main(args=None):
     init_logging(level=opts['--log'])
 
     try:
-        rde = RdeChecker(*opts['<file-spec>'],
-                         default_fkind=opts['--fkind'],
-                         archive=opts['--archive'])
-        if opts['--list-fkinds']:
-            print(rde.list_file_kinds())
+        if opts['--list']:
+            out = _build_infos(opts['fkinds'], opts['rules'])
+            dump_yaml(out, sys.stdout)
         else:
+            rde = RdeChecker(*opts['<file-spec>'],
+                             default_fkind=opts['--fkind'],
+                             archive=opts['--archive'])
             rde.process_files()
 
         return 0
