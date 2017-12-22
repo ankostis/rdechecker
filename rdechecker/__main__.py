@@ -11,6 +11,7 @@ Validate & archive Real-Driving-Emissions CSV-files (TODO: Excel).
 USAGE:
   rdecheck [--log=<level>] [-a] [-f=<fkind>] <file-spec>...
   rdecheck -l [fkinds | rules]
+  rdecheck -V
 
 WHERE:
   <file-spec>                   A string like: [<fkind>:]<fpath>.
@@ -24,7 +25,8 @@ WHERE:
                                 [default: INFO]
   -l, --list                    List available file-kinds and/or CSV cell-rules.
   -h, --help                    Show this screen.
-  
+  -V, --version                 Show program & validation-schema versions.
+
 EXAMPLES:
   $ rdechek  -l
   f1: Big file
@@ -161,16 +163,18 @@ def main(args=None):
     :param args:
         Argument vector to be parsed, ``sys.argv[1:]`` if None
     """
-    from . import AppException, SchemaError, log, RdeChecker, dump_yaml
+    from . import AppException, SchemaError, log, RdeChecker, load_yaml, dump_yaml
     from ._version import version
 
     opts = docopt.docopt(__doc__,
-                         argv=sys.argv[1:] if args is None else args,
-                         version=version)
+                         argv=sys.argv[1:] if args is None else args)
     init_logging(level=opts['--log'])
 
     try:
-        if opts['--list']:
+        if opts['--version']:
+            rde = RdeChecker()
+            print(version, rde.schema_dict['version'])
+        elif opts['--list']:
             out = _build_infos(opts['fkinds'], opts['rules'])
             dump_yaml(out, sys.stdout)
         else:

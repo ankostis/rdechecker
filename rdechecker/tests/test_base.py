@@ -46,10 +46,16 @@ class TBase(unittest.TestCase):
         rde = RdeChecker()
         assert is_break_line == rde._is_section_break_line(got_lines)
 
-    def test_validation(self):
+    def test_M_version(self):
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            assert 0 == cmain.main(['--version'])
+        assert 2 == len(stdout.getvalue().strip().split())
+
+    def test_M_validation(self):
         assert 0 == cmain.main(['f1:rdechecker/tests/Sample_Data_Exchange_File.csv'])
 
-    def test_list_fkinds(self):
+    def test_M_list_fkinds(self):
         exp_out = tw.dedent("""
             - f1: Big file
             - f2: The summary file

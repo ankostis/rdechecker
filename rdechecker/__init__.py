@@ -26,7 +26,7 @@ class SchemaError(AppException):
     pass
 
 
-def parse_yaml(finp, drop_comments=False, **kw):
+def load_yaml(finp, drop_comments=False, **kw):
     return yaml.load(finp,
                      Loader=yaml.Loader if drop_comments else yaml.RoundTripLoader,
                      **kw)
@@ -204,7 +204,7 @@ class RdeChecker:
     def _read_files_schema(self):
         with pkg_resources.resource_stream(__name__,   # @UndefinedVariable
                                            'files-schema.yaml') as finp:
-            self.schema_dict = parse_yaml(finp, True)
+            self.schema_dict = load_yaml(finp, True)
 
     def _is_section_break_line(self, line):
         ## Delete all chars and expect line to be empty.
