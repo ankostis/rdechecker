@@ -186,12 +186,17 @@ class CellRules:
 class RdeChecker:
     def __init__(self, *file_specs,
                  default_fkind=None, archive=False, delimiter=','):
-        self.default_fkind = default_fkind
+        self.cellcheck = CellRules()
         self.file_specs = file_specs
         self.archive = archive
         self.delimiter = delimiter
         self._read_files_schema()
-        self.cellcheck = CellRules()
+
+        all_file_kinds = self.schema_dict['file_kinds']
+        if default_fkind and default_fkind not in all_file_kinds:
+            raise SchemaError('Unknown default file-fkind %r!\n  Must be one of %s' %
+                             (default_fkind, tuple(all_file_kinds)))
+        self.default_fkind = default_fkind
 
         if self.archive:
             raise NotImplemented('HDF5-archiving not ready yet.')
