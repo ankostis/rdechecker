@@ -159,9 +159,10 @@ setup(
         'rainbow_logging_handler',
         'docopt',
         'ruamel.yaml',
-        'strict-rfc3339',  # for date-tie schema parsing
+        'strict-rfc3339',   # for date-tie schema parsing
         'boltons',
         'toolz',
+        'jinja2',           # for enhancing yaml-schema file
     ],
     packages=find_packages(exclude=[
         'tests', 'tests.*',

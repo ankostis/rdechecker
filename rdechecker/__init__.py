@@ -14,6 +14,8 @@ import sys
 import pkg_resources
 from ruamel import yaml  # @UnresolvedImport
 
+import functools as fnt
+
 from ._version import version, __version__, __updated__
 
 
@@ -31,10 +33,21 @@ def load_yaml(finp, drop_comments=False, **kw):
                      Loader=yaml.Loader if drop_comments else yaml.RoundTripLoader,
                      **kw)
 
+
 def dump_yaml(content, fout, drop_comments=False, **kw):
     return yaml.dump(content, fout,
                      Dumper=yaml.Dumper if drop_comments else yaml.RoundTripDumper,
                      **kw)
+
+
+@fnt.lru_cache()
+def read_jinja_template(fname):
+    from jinja2 import Environment, PackageLoader, select_autoescape
+
+    env = Environment(
+        loader=PackageLoader(__name__, package_path=''),
+    )
+    return env.get_template(fname).render()
 
 
 _file_spec_regex = re.compile(r'^(?:(\w+):)?(.*)$')
@@ -196,7 +209,7 @@ class RdeChecker:
         self.file_specs = file_specs
         self.archive = archive
         self.delimiter = delimiter
-        self._read_files_schema()
+        self.schema_dict = self._read_files_schema()
 
         all_file_kinds = self.schema_dict['file_kinds']
         if default_fkind and default_fkind not in all_file_kinds:
@@ -208,9 +221,8 @@ class RdeChecker:
             raise NotImplemented('HDF5-archiving not ready yet.')
 
     def _read_files_schema(self):
-        with pkg_resources.resource_stream(__name__,   # @UndefinedVariable
-                                           'files-schema.yaml') as finp:
-            self.schema_dict = load_yaml(finp, True)
+        yml_txt = self.schema_dict = read_jinja_template('files-schema.yaml')
+        return load_yaml(yml_txt, True)
 
     def _is_section_break_line(self, line):
         ## Delete all chars and expect line to be empty.
