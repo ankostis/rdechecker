@@ -11,7 +11,7 @@ file_kinds:
         sections:
             - start:    1
               end:      47
-              lines:
+              row_rules:
                 1: [TEST ID, '[code]', {req: null}]
                 2: [Test date, '[dd.mm.yyyy]', {regex: '\d\d.\d\d.\d{4}'}]
                 3: [Organisation supervising the test, '[name of the organization]', {req: null}]
@@ -38,7 +38,7 @@ file_kinds:
 
             - start:    71
               end:      89
-              lines:
+              row_rules:
                 81: [Span reference value THC, '[ppm]', {_float: null}]
 
             - start:    96
@@ -49,6 +49,6 @@ file_kinds:
 
     f2:
         description: "The summary file"
-        lines:
+        row_rules:
             4: ["Trip average speed ", '[km/h]', {float: null}]
             5: ["Trip maximum speed ", '[km/h]', {float: null}]

@@ -226,11 +226,11 @@ class RdeChecker:
         yml_txt = self.schema_dict = read_jinja_template('files-schema.yaml')
         return load_yaml(yml_txt, True)
 
-    def _is_section_break_line(self, line):
-        ## Delete all chars and expect line to be empty.
-        line_break_chars = '\r\n%c' % self.delimiter
-        line = line.translate(dict.fromkeys(ord(c) for c in line_break_chars))
-        return line == ''
+    def _is_section_break_row(self, row):
+        ## Delete all chars and expect row to be empty.
+        row_break_chars = '\r\n%c' % self.delimiter
+        row = row.translate(dict.fromkeys(ord(c) for c in row_break_chars))
+        return row == ''
 
 
     def _prepare_section_break_indices(self, sections_schema):
@@ -240,10 +240,10 @@ class RdeChecker:
         :param sections_schema:
             must be sorted by `start` offset
         :return:
-            an ascending list of line-indices(1-based) for all section-breaks
+            an ascending list of row-indices(1-based) for all section-breaks
         """
         assert sections_schema
-        break_line_indices = []
+        break_row_indices = []
         last_end = 0
         for i, section in enumerate(sections_schema):
             try:
@@ -255,30 +255,30 @@ class RdeChecker:
                 end = section.get('end')
                 assert end is None or end > start, ("Zero-len section!", last_end, section)
 
-                break_nlines = start - (last_end + 1)
-                assert break_nlines >= 0, ("What??", break_nlines, last_end, section)
+                break_nrows = start - (last_end + 1)
+                assert break_nrows >= 0, ("What??", break_nrows, last_end, section)
 
-                break_line_indices.extend(list(range(last_end + 1, start)))
+                break_row_indices.extend(list(range(last_end + 1, start)))
 
                 last_end = end
             except Exception as ex:
                 ex.args += ("schema-section no: %i" % i, )
                 raise
 
-        return break_line_indices
+        return break_row_indices
 
     def _yield_sections(self, sections_schema, fp,
                        validate_section_breaks=True):
         """
         :param validate_section_breaks:
-            If true, check that all section-nreak lines are "void",
+            If true, check that all section-nreak rows are "void",
             ie either empty or just full of delimiters.
         :return:
             A generator yielding for each section the tuple::
 
-                (section-schema, section-lines)
+                (section-schema, section-rows)
 
-            The start-line number `start` is 1-based.
+            The start-row number `start` is 1-based.
         """
         sections_schema = sorted(sections_schema, key=lambda s: s['start'])
         sections_schema_iter = iter(sections_schema)
@@ -289,24 +289,24 @@ class RdeChecker:
             return sch, end
 
         section_schema, section_end = next_section_schema()
-        section_lines = []
+        section_rows = []
 
         def yield_section():
-            nonlocal section_lines
-            if section_lines:
-                yield section_schema, section_lines
-                section_lines = []
+            nonlocal section_rows
+            if section_rows:
+                yield section_schema, section_rows
+                section_rows = []
 
         break_indices = self._prepare_section_break_indices(sections_schema)
         break_indices = set(break_indices) if break_indices else ()
 
-        for i, line in enumerate(fp, 1):
+        for i, row in enumerate(fp, 1):
             try:
                 if i in break_indices:
                     if (validate_section_breaks and
-                        not self._is_section_break_line(line)):
+                        not self._is_section_break_row(row)):
                             raise AppException(
-                                "Found a non-void section-break row:\n  %s" % line)
+                                "Found a non-void section-break row:\n  %s" % row)
                 else:
                     if i > section_end:  # Are we beyond end-of-section?
                         yield from yield_section()
@@ -319,17 +319,17 @@ class RdeChecker:
                         assert i >= section_schema['start'], (
                             "Walking before new section?", i, section_schema)
 
-                    section_lines.append(line)
+                    section_rows.append(row)
             except Exception as ex:
                 ex.args += ("row: %i" % i, )
                 raise
 
         yield from yield_section()
 
-    def _validate_line(self, r, line_schema, line):
-        if line_schema:
+    def _validate_row(self, r, row_schema, row):
+        if row_schema:
             # FIXME: use pandas to parse CSV.
-            for c, (cell_rules, cell) in enumerate(zip(line_schema, line)):
+            for c, (cell_rules, cell) in enumerate(zip(row_schema, row)):
                 if cell_rules:
                     try:
                         self.cellcheck.validate_cell_rule(cell_rules, cell)
@@ -337,9 +337,9 @@ class RdeChecker:
                         ex.args += ("column: %i" % c, "row: %i" % r)
                         raise
 
-    def _validate_constraints_by_row(self, lines_schema, df, section_start=1):
-        for r, l_schema in lines_schema.items():
-            self._validate_line(r, l_schema, df.iloc[r - section_start, :].values)
+    def _validate_constraints_by_row(self, rows_schema, df, section_start=1):
+        for r, l_schema in rows_schema.items():
+            self._validate_row(r, l_schema, df.iloc[r - section_start, :].values)
 
     def _read_csv(self, kind_schema, inp):
         df_kw = kind_schema.get('df_kw', {})
@@ -348,18 +348,18 @@ class RdeChecker:
     def validate_stream(self, kind_schema, fp):
         sections_schema = kind_schema.get('sections')
         if sections_schema:
-            for s_schema, s_lines in self._yield_sections(sections_schema, fp):
-                lines_schema = s_schema.get('lines')
-                if lines_schema:
-                    inp = io.StringIO(''.join(s_lines))
+            for s_schema, s_rows in self._yield_sections(sections_schema, fp):
+                rows_schema = s_schema.get('row_rules')
+                if rows_schema:
+                    inp = io.StringIO(''.join(s_rows))
                     df = self._read_csv(kind_schema, inp)
                     start = s_schema['start']
-                    self._validate_constraints_by_row(lines_schema, df, start)
+                    self._validate_constraints_by_row(rows_schema, df, start)
         else:
-            lines_schema = kind_schema.get('lines')
-            if lines_schema:
+            rows_schema = kind_schema.get('row_rules')
+            if rows_schema:
                 df = self._read_csv(kind_schema, fp)
-                self._validate_constraints_by_row(lines_schema, df)
+                self._validate_constraints_by_row(rows_schema, df)
 
     def validate_filespec(self, file_spec):
         """
