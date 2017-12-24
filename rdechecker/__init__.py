@@ -15,8 +15,10 @@ import pkg_resources
 from ruamel import yaml  # @UnresolvedImport
 
 import functools as fnt
+import pandas as pd
 
 from ._version import version, __version__, __updated__
+import io
 
 
 log = logging.getLogger(__name__)
@@ -265,24 +267,35 @@ class RdeChecker:
 
         return break_line_indices
 
-    def _yield_section_lines(self, sections_schema, fp):
+    def _yield_sections(self, sections_schema, fp,
+                       validate_section_breaks=True):
         """
+        :param validate_section_breaks:
+            If true, check that all section-nreak lines are "void",
+            ie either empty or just full of delimiters.
         :return:
-            A generator yielding for each non break-section line the tuple::
+            A generator yielding for each section the tuple::
 
-                (i, line_schema, line)
+                (section-schema, section-lines)
 
-            The line-number `i` is 1-based.
+            The start-line number `start` is 1-based.
         """
         sections_schema = sorted(sections_schema, key=lambda s: s['start'])
         sections_schema_iter = iter(sections_schema)
 
         def next_section_schema():
             sch = next(sections_schema_iter)
+            end = sch.get('end') or float('inf')
+            return sch, end
 
-            return sch, sch.get('lines')
+        section_schema, section_end = next_section_schema()
+        section_lines = []
 
-        cur_schema, cur_lines_schema = next_section_schema()
+        def yield_section():
+            nonlocal section_lines
+            if section_lines:
+                yield section_schema, section_lines
+                section_lines = []
 
         break_indices = self._prepare_section_break_indices(sections_schema)
         break_indices = set(break_indices) if break_indices else ()
@@ -290,31 +303,33 @@ class RdeChecker:
         for i, line in enumerate(fp, 1):
             try:
                 if i in break_indices:
-                    if not self._is_section_break_line(line):
-                        raise AppException(
-                            "Found non-void section-break:\n  %s" %
-                            (i, line))
+                    if (validate_section_breaks and
+                        not self._is_section_break_line(line)):
+                            raise AppException(
+                                "Found a non-void section-break row:\n  %s" % line)
                 else:
-                    if i > (cur_schema.get('end') or float('inf')):
+                    if i > section_end:  # Are we beyond end-of-section?
+                        yield from yield_section()
                         ## Jump section.
+                        section_schema, section_end = next_section_schema()
 
-                        cur_schema, cur_lines_schema = next_section_schema()
-                        assert i == cur_schema['start'], (
-                            "Jumped outside a section?", i, cur_schema)
+                        assert i == section_schema['start'], (
+                            "Missed start of new section?", i, section_schema)
                     else:
-                        assert i >= cur_schema['start'], (
-                            "Walking outside a section?", i, cur_schema)
+                        assert i >= section_schema['start'], (
+                            "Walking before new section?", i, section_schema)
 
-                    yield i, cur_lines_schema and cur_lines_schema.get(i), line
+                    section_lines.append(line)
             except Exception as ex:
                 ex.args += ("row: %i" % i, )
                 raise
 
+        yield from yield_section()
+
     def _validate_line(self, r, line_schema, line):
         if line_schema:
             # FIXME: use pandas to parse CSV.
-            for c, (cell_rules, cell) in enumerate(zip(line_schema,
-                                                        line.split(self.delimiter))):
+            for c, (cell_rules, cell) in enumerate(zip(line_schema, line)):
                 if cell_rules:
                     try:
                         self.cellcheck.validate_cell_rule(cell_rules, cell)
@@ -322,18 +337,29 @@ class RdeChecker:
                         ex.args += ("column: %i" % c, "row: %i" % r)
                         raise
 
+    def _validate_constraints_by_row(self, lines_schema, df, section_start=1):
+        for r, l_schema in lines_schema.items():
+            self._validate_line(r, l_schema, df.iloc[r - section_start, :].values)
+
+    def _read_csv(self, kind_schema, inp):
+        df_kw = kind_schema.get('df_kw', {})
+        return pd.read_csv(inp, header=None, *df_kw)
+
     def validate_stream(self, kind_schema, fp):
         sections_schema = kind_schema.get('sections')
         if sections_schema:
-            # FIXME: use pandas to parse CSV.
-            for line_spec in self._yield_section_lines(sections_schema, fp):
-                self._validate_line(*line_spec)
+            for s_schema, s_lines in self._yield_sections(sections_schema, fp):
+                lines_schema = s_schema.get('lines')
+                if lines_schema:
+                    inp = io.StringIO(''.join(s_lines))
+                    df = self._read_csv(kind_schema, inp)
+                    start = s_schema['start']
+                    self._validate_constraints_by_row(lines_schema, df, start)
         else:
             lines_schema = kind_schema.get('lines')
             if lines_schema:
-                # FIXME: use pandas to parse CSV.
-                for i, line in enumerate(fp, 1):
-                    self._validate_line(i, lines_schema.get(i), line)
+                df = self._read_csv(kind_schema, fp)
+                self._validate_constraints_by_row(lines_schema, df)
 
     def validate_filespec(self, file_spec):
         """
@@ -364,6 +390,7 @@ class RdeChecker:
     def process_files(self):
         for fspec in self.file_specs:
             try:
+                log.debug('%r: validating...', fspec)
                 self.validate_filespec(fspec)
                 log.info('%s: OK', fspec)
             except OSError as ex:
